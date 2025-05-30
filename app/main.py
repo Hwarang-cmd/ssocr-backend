@@ -1,26 +1,24 @@
+# app/main.py
 from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import JSONResponse
 import shutil
 import os
 import uuid
-from app.ssocr import load_image, preprocess, find_digits_positions, recognize_digits_line_method
-import cv2
+
+from app.ssocr import predict  # ฟังก์ชันใหม่ที่คุณจะเพิ่ม
 
 app = FastAPI()
 
-@app.post("/predict/")
-async def predict(file: UploadFile = File(...)):
-    # Save file temporarily
-    tmp_filename = f"temp_{uuid.uuid4()}.png"
-    with open(tmp_filename, "wb") as buffer:
+@app.post("/predict")
+async def predict_image(file: UploadFile = File(...)):
+    temp_filename = f"/tmp/{uuid.uuid4()}.png"
+    with open(temp_filename, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Process image
-    blurred, _ = load_image(tmp_filename)
-    preprocessed = preprocess(blurred, 35)
-    positions = find_digits_positions(preprocessed)
-    digits = recognize_digits_line_method(positions, blurred, preprocessed)
-
-    # Cleanup
-    os.remove(tmp_filename)
-
-    return {"digits": digits}
+    try:
+        result = predict(temp_filename)
+        return JSONResponse(content={"digits": result})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    finally:
+        os.remove(temp_filename)
