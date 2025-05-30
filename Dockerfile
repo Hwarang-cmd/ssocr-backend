@@ -1,16 +1,10 @@
 FROM python:3.11-slim
 
-# ติดตั้ง dependencies ที่จำเป็น
+# ติดตั้ง lib ที่จำเป็นสำหรับ OpenCV
 RUN apt-get update && apt-get install -y \
-    git build-essential imagemagick libgl1 libglib2.0-0 \
-    pkg-config libx11-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libgl1 libglib2.0-0 && \
+    rm -rf /var/lib/apt/lists/*
 
-# ติดตั้ง ssocr
-RUN git clone https://github.com/jiweibo/SSOCR.git /ssocr && \
-    cd /ssocr && make
-
-# คัดลอกโค้ดของเรา
 WORKDIR /app
 COPY . /app
 
